@@ -1,0 +1,8 @@
+COMS 336 Project Proposal
+Arik Coats
+Evan Dye
+
+Our project proposal is to create a scene modelling a basic water surface. The scene will include a skybox, 
+a directional light simulating the sun, an ellipsoid, and a plane to represent the water.
+The surface of the plane will be modelled to look like a shifting water surface and will move up and down around the 
+ellipsoid to imitate small, level waves at a beach.
