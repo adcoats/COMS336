@@ -19,7 +19,13 @@ var permutation = [ 151,160,137,91,90,15,
 
 var p = [];
 
-var gradients2D = [ [0,1], [0, -1], [1, 0], [-1,0] ];
+var THIRD_PI = Math.PI / 3;
+var QUARTER_PI = Math.PI / 4;
+var gradients2D = [ [0,1], [0, -1], [1, 0], [-1,0], [ Math.cos(THIRD_PI), Math.sin(THIRD_PI) ], [ -Math.cos(THIRD_PI), Math.sin(THIRD_PI) ], [ Math.cos(THIRD_PI), -Math.sin(THIRD_PI) ],
+					[ -Math.cos(THIRD_PI), -Math.sin(THIRD_PI) ], [ Math.cos(QUARTER_PI), Math.sin(QUARTER_PI) ], [ -Math.cos(QUARTER_PI), Math.sin(QUARTER_PI) ], 
+					[ Math.cos(QUARTER_PI), -Math.sin(QUARTER_PI) ], [ -Math.cos(QUARTER_PI), -Math.sin(QUARTER_PI) ]];
+   
+var isInit = false;   
    
 /*
  * From http://freespace.virgin.net/hugo.elias/models/m_perlin.htm
@@ -72,7 +78,7 @@ function grad( hash, x, y ){
 	
 	var gradIndex = hash % gradients2D.length;
 	
-	var dot = ( xn*gradients2D[gradIndex][0] + yn*gradients2D[gradIndex][1] );
+	var dot = ( x*gradients2D[gradIndex][0] + y*gradients2D[gradIndex][1] );
 	return dot;
 }
 
@@ -86,7 +92,7 @@ function perlin( x, y ){
 	var yi = parseInt(y) % permutation.length;
 	
 	var xf = x - parseInt(x);
-	var yf = x - parseInt(y);
+	var yf = y - parseInt(y);
 	
 	var u = fade(xf);
 	var v = fade(yf);
@@ -96,10 +102,10 @@ function perlin( x, y ){
 	var ba = p[p[xi+1] + yi  ];
 	var bb = p[p[xi+1] + yi+1];
 	
-	var x0 = lerp( grad(aa, xf, yf), grad(ba, xf, yf), xf );
-	var x1 = lerp( grad(ab, xf, yf), grad(bb, xf, yf), xf );
+	var x0 = lerp( grad(aa, xf, yf), grad(ba, xf, yf), u );
+	var x1 = lerp( grad(ab, xf, yf), grad(bb, xf, yf), u );
 	
-	return ( lerp( x0, x1, yf ) +1 )/2;
+	return ( lerp( x0, x1, v ) +1 )/2;
 }
 
 /*
@@ -112,6 +118,9 @@ function OctavePerlin( x, y, numOctaves, persistence ){
 	var amplitude = 1;
 	var maxValue = 0;
 	
+	//var printString = x.toString() + ", " + y.toString();
+	//console.log(printString);
+	
 	for( var i = 0; i < numOctaves; i++ ){
 		total += perlin( x * frequency, y * frequency) * amplitude;
 		maxValue += amplitude;
@@ -120,5 +129,25 @@ function OctavePerlin( x, y, numOctaves, persistence ){
 	}
 	
 	return total/maxValue;
+}
+
+function getPerlinNoiseArray( width, height, numSteps, numOctaves, persistence ){
+	
+	if( !isInit ){
+		populateRandomValueArray();
+	}
+	
+	stepSizeX = width / numSteps;
+	stepSizeY = height / numSteps;
+	
+	var arr = [];
+	
+	for( var i = 0; i < width; i+= stepSizeX ){
+		for( var j = 0; j < height; j+=stepSizeY ){
+			arr[arr.length] = OctavePerlin( i, j, numOctaves, persistence );
+		}
+	}
+	
+	return arr;
 }
 

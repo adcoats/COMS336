@@ -4,6 +4,11 @@ var camera;
 var WIDTH = 900;
 var HEIGHT = 600;
 
+function assignPerlinValues(){
+	var perlinValues = getPerlinNoiseArray( 3, 3, 4, 2, 1/2 );
+	console.log(perlinValues);
+}
+
 function main(){
 	
 	/*
@@ -32,13 +37,16 @@ function main(){
 	var light = new THREE.AmbientLight( 0x333333 );
 	scene.add( light );
 	
+	var numSteps = 32;
 	
-	var dummyRGBA = new Uint8Array(16 * 16 * 4);
-	for(var i=0; i< 16 * 16; i++){
-		// RGB from 0 to 255
+	var perlinValues = getPerlinNoiseArray( 16, 16, numSteps, 2, 1/2 );
+	console.log(perlinValues);
+	
+	dummyRGBA = new Uint8Array(numSteps * numSteps * 4);
+	for(var i=0; i< perlinValues.length; i++){
+		
 		dummyRGBA[4*i] = dummyRGBA[4*i + 1] = 0;
-		dummyRGBA[4*i + 2] = 255*i/(16*16);
-		// OPACITY
+		dummyRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[i]));
 		dummyRGBA[4*i + 3] = 255;
 	}
 
@@ -51,7 +59,7 @@ function main(){
 	 * Adding an object
 	 */
 	  // Make an object
-	var geometry = new THREE.PlaneGeometry(1, 1, 1);
+	var geometry = new THREE.PlaneGeometry(3, 3, 3);
 	//var material = new THREE.MeshBasicMaterial( {color: 0x00FaFF} );
 	var material = new THREE.MeshPhongMaterial( {color: 0x00aaFF} );
 	//var material = new THREE.MeshPhongMaterial( {map: dummyDataTex} );
@@ -62,8 +70,12 @@ function main(){
 	// Add it to the scene
 	scene.add( plane );
 	
+	//var perlinValues = getPerlinNoiseArray( 3, 3, 4, 2, 1/2 );
+	//console.log(perlinValues);
+	
 	var render = function () {
 		requestAnimationFrame( render );
+		//assignPerlinValues();
 		renderer.render(scene, camera);
 	};
 
