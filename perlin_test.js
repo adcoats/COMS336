@@ -165,7 +165,8 @@ function start()
 	
   // construct hierarchy
   
-  
+  var dataArray = generateDataArray(3,3);
+  var dataTex = new THREE.DataTexture( dataArray, 3, 3, 
   
 
   var render = function () {
