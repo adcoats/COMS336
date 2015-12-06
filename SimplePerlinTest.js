@@ -3,6 +3,7 @@ var camera;
 
 var WIDTH = 900;
 var HEIGHT = 600;
+var DIM = 256;
 
 function assignPerlinValues(){
 	var perlinValues = getPerlinNoiseArray( 3, 3, 4, 2, 1/2 );
@@ -37,10 +38,10 @@ function main(){
 	var light = new THREE.AmbientLight( 0x333333 );
 	scene.add( light );
 	
-	var numSteps = 32;
+	var numSteps = DIM * 2;
 	
-	var perlinValues = getPerlinNoiseArray( 16, 16, numSteps, 2, 1/2 );
-	console.log(perlinValues);
+	var perlinValues = getPerlinNoiseArray( DIM, DIM, numSteps, 2, 1/2 );
+	//console.log(perlinValues);
 	
 	dummyRGBA = new Uint8Array(numSteps * numSteps * 4);
 	for(var i=0; i< perlinValues.length; i++){
@@ -48,10 +49,10 @@ function main(){
 		dummyRGBA[4*i] = dummyRGBA[4*i + 1] = 0;
 		dummyRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[i]));
 		dummyRGBA[4*i + 3] = 255;
-		console.log(dummyRGBA[4*i + 2]);
+		//console.log(dummyRGBA[4*i + 2]);
 	}
 
-	dummyDataTex = new THREE.DataTexture( dummyRGBA, 16, 16, THREE.RGBAFormat );
+	dummyDataTex = new THREE.DataTexture( dummyRGBA, DIM, DIM, THREE.RGBAFormat );
 	dummyDataTex.needsUpdate = true;
 
 	
@@ -67,16 +68,42 @@ function main(){
 	material.normalMap = dummyDataTex;
 	var plane = new THREE.Mesh( geometry, material );
 	plane.scale.set(1, 1, 1);
+	plane.name = "plane";
 	  
 	// Add it to the scene
 	scene.add( plane );
 	
-	//var perlinValues = getPerlinNoiseArray( 3, 3, 4, 2, 1/2 );
-	//console.log(perlinValues);
+	
 	
 	var render = function () {
 		requestAnimationFrame( render );
-		//assignPerlinValues();
+		
+			
+			perlinValues = getPerlinNoiseArray( DIM, DIM, numSteps, 2, 1/2 );
+			
+			
+			dummyRGBA = new Uint8Array(numSteps * numSteps * 4);
+			for(i=0; i< perlinValues.length; i++){
+				
+				dummyRGBA[4*i] = dummyRGBA[4*i + 1] = 0;
+				dummyRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[i]));
+				dummyRGBA[4*i + 3] = 255;
+				
+			}
+
+			dummyDataTex = new THREE.DataTexture( dummyRGBA, DIM, DIM, THREE.RGBAFormat );
+			dummyDataTex.needsUpdate = true;
+
+			scene.remove( scene.getObjectByName("plane") );
+			
+			material.normalMap = dummyDataTex;
+			var plane = new THREE.Mesh( geometry, material );
+			plane.scale.set(1, 1, 1);
+			plane.name = "plane";
+	  
+			// Add it to the scene
+			scene.add( plane );
+				
 		renderer.render(scene, camera);
 	};
 

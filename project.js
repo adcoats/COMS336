@@ -209,18 +209,18 @@ function start()
   
   
   // old perlin stuff
-  // var numSteps = 2048;
-  // var perlinValues = getPerlinNoiseArray( 1024, 1024, numSteps, 2, 0.25 );
-  // console.log(perlinValues);
-  // dummyRGBA = new Uint8Array(numSteps * numSteps * 4);
-  // for(var i=0; i< perlinValues.length; i++){
+   var numSteps = 2048;
+   var perlinValues = getPerlinNoiseArray( 1024, 1024, numSteps, 2, 0.25 );
+   //console.log(perlinValues);
+   dummyRGBA = new Uint8Array(numSteps * numSteps * 4);
+   for(var i=0; i< perlinValues.length; i++){
 		
-		// dummyRGBA[4*i] = dummyRGBA[4*i + 1] = 0;
-		////dummyRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[i]));
-		// dummyRGBA[4*i + 3] = 255;
-  // }
-  // dummyDataTex = new THREE.DataTexture( dummyRGBA, 1024, 1024, THREE.RGBAFormat );
-  // dummyDataTex.needsUpdate = true;
+		dummyRGBA[4*i] = dummyRGBA[4*i + 1] = 0;
+		dummyRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[i]));
+		dummyRGBA[4*i + 3] = 255;
+  }
+  dummyDataTex = new THREE.DataTexture( dummyRGBA, 1024, 1024, THREE.RGBAFormat );
+  dummyDataTex.needsUpdate = true;
   
   // new perlin stuff
   // var size = 1024;
@@ -237,7 +237,7 @@ function start()
   // rgbTex = new THREE.DataTexture(rgb, size/2, size/2, THREE.RGBFormat);
   // rgbTex.needsUpdate = true;
   
-  
+  /*
   var size = 1024;
   var seed = 1;
   var perlinValues = getPerlinNoiseArray(size, seed);
@@ -256,27 +256,27 @@ function start()
 		
   }
   console.log(rgb);
-  //var rgbTex = new THREE.DataTexture(rgb, size/2, size/2, THREE.RGBAFormat);
-  var rgbTex = THREE.ImageUtils.generateDataTexture(1024,1024, 0xff0000)
+  var rgbTex = new THREE.DataTexture(rgb, size/2, size/2, THREE.RGBAFormat);
+  //var rgbTex = THREE.ImageUtils.generateDataTexture(1024,1024, 0xff0000)
   rgbTex.needsUpdate = true;
+  */
   
-  
+  /*
   var plane = new THREE.PlaneGeometry(20, 20);
-  var flatmaterial = new THREE.MeshLambertMaterial( { map : rgbTex, side: THREE.DoubleSide} );
+  var flatmaterial = new THREE.MeshLambertMaterial( { map : dummyDataTex, side: THREE.DoubleSide} );
   var flat = new THREE.Mesh( plane, flatmaterial );
   flat.position.set(20,20,20);
   flat.rotateX(1.571);
   scene.add(flat);
+  */
   
   // create water
   var plane = new THREE.CircleGeometry( 200, 128 );
   var watertexture = THREE.ImageUtils.loadTexture("../images/water.jpg");
   //var watermaterial = new THREE.MeshPhongMaterial( {map : watertexture, side: THREE.DoubleSide, transparent : true, opacity : 0.6 } );
   var watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .75, refractionRatio : 1.333, transparent : true, opacity : 0.6});	// refractionRatio : 0.66,  side: THREE.DoubleSide,
-  // watermaterial.normalMap = dummyDataTex;
-  //watermaterial.normalMap = watertexture;
-  watermaterial.normalMap = rgbTex;
-  watermaterial.bumpMap = rgbTex;
+  //watermaterial.normalMap = dummyDataTex;
+  watermaterial.bumpMap = dummyDataTex;
   watermaterial.wireframe = false;
   var water = new THREE.Mesh( plane, watermaterial );
   water.rotateX(-1.571);

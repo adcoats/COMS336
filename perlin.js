@@ -19,6 +19,9 @@ var permutation = [ 151,160,137,91,90,15,
 
 var p = [];
 
+var cycleCount = 0;
+var cycleMax = 255;
+
 var THIRD_PI = Math.PI / 3;
 var QUARTER_PI = Math.PI / 4;
 var gradients2D = [ [0,1], [0, -1], [1, 0], [-1,0], [ Math.cos(THIRD_PI), Math.sin(THIRD_PI) ], [ -Math.cos(THIRD_PI), Math.sin(THIRD_PI) ], [ Math.cos(THIRD_PI), -Math.sin(THIRD_PI) ],
@@ -97,10 +100,13 @@ function perlin( x, y ){
 	var u = fade(xf);
 	var v = fade(yf);
 	
-	var aa = p[p[xi  ] + yi  ];
-	var ab = p[p[xi  ] + yi+1];
-	var ba = p[p[xi+1] + yi  ];
-	var bb = p[p[xi+1] + yi+1];
+	var offset = cycleCount;// % cycleMax;
+	
+	var aa = p[p[xi  + offset] + yi   + offset];
+	var ab = p[p[xi  + offset] + yi+1 + offset];
+	var ba = p[p[xi+1+ offset] + yi   + offset];
+	var bb = p[p[xi+1+ offset] + yi+1 + offset];
+	
 	
 	var x0 = lerp( grad(aa, xf, yf), grad(ba, xf, yf), u );
 	var x1 = lerp( grad(ab, xf, yf), grad(bb, xf, yf), u );
@@ -146,6 +152,12 @@ function getPerlinNoiseArray( width, height, numSteps, numOctaves, persistence )
 		for( var j = 0; j < height; j+=stepSizeY ){
 			arr[arr.length] = OctavePerlin( i, j, numOctaves, persistence );
 		}
+	}
+	
+	cycleCount++;
+	
+	if( cycleCount == cycleMax ){
+		cycleCount = 0;
 	}
 	
 	return arr;
