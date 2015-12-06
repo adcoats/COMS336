@@ -11,39 +11,21 @@ var imageNames = [
                   path + "pz.jpg",
                   path + "nz.jpg"
                   ];		  
-
-// The scene and camera
-var scene;		
+		
+var axis = 'z';
+var paused = false;
 var camera;
 
 
 // object data
+
 var islanddummy;
 
-// The data texture for the water.
-var waterDataTex;
-var DIM = 128;
-var numSteps = DIM * 2;
-
-// Our array of Perlin Generated Values
-var numOctaves = 4;
-var persistence = 0.25;
-var perlinValues;
-
-// Offset our array of perlin values
-var offset = 0;
-var maxOffset = numSteps * numSteps;
-
-// The material for the water
-var watermaterial;
-
-// The water plane
-var plane; // The Geometry
-var water; // The mesh
-var waterName = "water";
 
 // animation control
 var animate = true;
+
+var move = 0.01;
 
 //translate keypress events to strings
 //from http://javascript.info/tutorial/keyboard-events
@@ -156,37 +138,13 @@ function handleKeyPress(event)
   if (cameraControl(camera, ch)) return;
 }
 
-function draw(){
-  
-	var waterRGBA = new Uint8Array(numSteps * numSteps * 4);
-   
-	for(var i=0; i< perlinValues.length; i++){
-		
-		waterRGBA[4*i] = waterRGBA[4*i + 1] = 0;
-		waterRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[i]));
-		waterRGBA[4*i + 3] = 255;
-	}
-	waterDataTex = new THREE.DataTexture( waterRGBA, DIM, DIM, THREE.RGBAFormat );
-	waterDataTex.needsUpdate = true;
-	watermaterial.normalMap = waterDataTex;
-	
-	// Redraw the water
-	scene.remove( scene.getObjectByName(waterName) );
-	
-	var water = new THREE.Mesh( plane, watermaterial );
-	water.rotateX(-1.571);
-	water.position.set(0, 1, 0);
-	water.name = waterName;
-	scene.add(water);
-}
-
 function start()
 {
   // assign camera controls
   window.onkeypress = handleKeyPress;
   
   // the scene
-  scene = new THREE.Scene();
+  var scene = new THREE.Scene();
   
   // create camera
   camera = new THREE.PerspectiveCamera( 45, 1.5, 0.1, 1000 );
@@ -248,21 +206,85 @@ function start()
 
   scene.add(island);
   
+  
+  
+  // old perlin stuff
+   var numSteps = 2048;
+   var perlinValues = getPerlinNoiseArray( 1024, 1024, numSteps, 2, 0.25 );
+   //console.log(perlinValues);
+   dummyRGBA = new Uint8Array(numSteps * numSteps * 4);
+   for(var i=0; i< perlinValues.length; i++){
+		
+		dummyRGBA[4*i] = dummyRGBA[4*i + 1] = 0;
+		dummyRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[i]));
+		dummyRGBA[4*i + 3] = 255;
+  }
+  dummyDataTex = new THREE.DataTexture( dummyRGBA, 1024, 1024, THREE.RGBAFormat );
+  dummyDataTex.needsUpdate = true;
+  
+  // new perlin stuff
+  // var size = 1024;
+  // var seed = 1;
+  // var perlinValues = getPerlinNoiseArray(size, seed);
+  // rgb = new Uint8ClampedArray(size * 3);
+  // for (var i = 0; i < perlinValues.length; i++)
+  // {
+		// rgb[3 * i] = Math.floor(perlinValues[i] * 255);
+		// rgb[3 * i + 1] = Math.floor(perlinValues[i] * 255);
+		// rgb[3 * i + 2] = Math.floor(perlinValues[i] * 255);
+		// console.log(perlinValues[i]);
+  // }
+  // rgbTex = new THREE.DataTexture(rgb, size/2, size/2, THREE.RGBFormat);
+  // rgbTex.needsUpdate = true;
+  
+  /*
+  var size = 1024;
+  var seed = 1;
+  var perlinValues = getPerlinNoiseArray(size, seed);
+  //var rgb = new Uint8ClampedArray(size * 4);
+  var rgb = new Uint8Array(size * 4);
+  for (var i = 0; i < perlinValues.length; i++)
+  {
+		// rgb[4 * i] = Math.floor(perlinValues[i] * 255);
+		// rgb[4 * i + 1] = Math.floor(perlinValues[i] * 255);
+		// rgb[4 * i + 2] = Math.floor(perlinValues[i] * 255);
+		// rgb[4 * i + 3] = 255;
+		rgb[4 * i] = Math.floor(Math.random() * 255);
+		rgb[4 * i + 1] = Math.floor(Math.random() * 255);
+		rgb[4 * i + 2] = Math.floor(Math.random() * 255);
+		rgb[4 * i + 3] = 255;
+		
+  }
+  console.log(rgb);
+  var rgbTex = new THREE.DataTexture(rgb, size/2, size/2, THREE.RGBAFormat);
+  //var rgbTex = THREE.ImageUtils.generateDataTexture(1024,1024, 0xff0000)
+  rgbTex.needsUpdate = true;
+  */
+  
+  /*
+  var plane = new THREE.PlaneGeometry(20, 20);
+  var flatmaterial = new THREE.MeshLambertMaterial( { map : dummyDataTex, side: THREE.DoubleSide} );
+  var flat = new THREE.Mesh( plane, flatmaterial );
+  flat.position.set(20,20,20);
+  flat.rotateX(1.571);
+  scene.add(flat);
+  */
+  
   // create water
-  plane = new THREE.CircleGeometry( 200, 128 );
-  //var watertexture = THREE.ImageUtils.loadTexture("../images/water.jpg");
+  var plane = new THREE.CircleGeometry( 200, 128 );
+  var watertexture = THREE.ImageUtils.loadTexture("../images/water.jpg");
   //var watermaterial = new THREE.MeshPhongMaterial( {map : watertexture, side: THREE.DoubleSide, transparent : true, opacity : 0.6 } );
-  watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .75, refractionRatio : 1.333, transparent : true, opacity : 0.6});	// refractionRatio : 0.66,  side: THREE.DoubleSide,
+  var watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .75, refractionRatio : 1.333, transparent : true, opacity : 0.6});	// refractionRatio : 0.66,  side: THREE.DoubleSide,
+  //watermaterial.normalMap = dummyDataTex;
+  watermaterial.bumpMap = dummyDataTex;
   watermaterial.wireframe = false;
-  
-  
   var water = new THREE.Mesh( plane, watermaterial );
   water.rotateX(-1.571);
   water.position.set(0, 1, 0);
-  water.name = waterName;
   scene.add(water);
   
   // lights
+  
   // sun
   var directionalLight = new THREE.DirectionalLight( 0xffffff );
   directionalLight.position.set( -1, 1, 1 );
@@ -272,17 +294,16 @@ function start()
   var light = new THREE.AmbientLight( 0x333333 );
   scene.add( light );
 	
-  // Generate our array of Perlin Values
-  perlinValues = getPerlinNoiseArray( DIM, DIM, numSteps, numOctaves, persistence );
+  // construct hierarchy
   
-  console.log( (numSteps * numSteps).toString() );
-  console.log( perlinValues.length );
+  
+  
 
   var render = function () {
     requestAnimationFrame( render );
 	if (animate)
 	{
-		draw();
+		// add animation
 	}
 	renderer.render(scene, camera);
   };

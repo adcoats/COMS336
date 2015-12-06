@@ -63,7 +63,7 @@ function main(){
 	  // Make an object
 	var geometry = new THREE.PlaneGeometry(3, 3, 3);
 	//var material = new THREE.MeshBasicMaterial( {color: 0x00FaFF} );
-	var material = new THREE.MeshPhongMaterial( {color: 0x00aaFF} );
+	var material = new THREE.MeshPhongMaterial( {color: 0x00FFFF} );
 	//var material = new THREE.MeshPhongMaterial( {map: dummyDataTex} );
 	material.normalMap = dummyDataTex;
 	var plane = new THREE.Mesh( geometry, material );

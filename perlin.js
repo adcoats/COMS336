@@ -19,8 +19,8 @@ var permutation = [ 151,160,137,91,90,15,
 
 var p = [];
 
-var cycleCount = 0;
-var cycleMax = 255;
+//var cycleCount = 0;
+//var cycleMax = 255;
 
 var THIRD_PI = Math.PI / 3;
 var QUARTER_PI = Math.PI / 4;
@@ -34,7 +34,7 @@ var isInit = false;
  * From http://freespace.virgin.net/hugo.elias/models/m_perlin.htm
  * and seen on many other articles/forums
  */
-function interpolate( a, b, x ){
+function coslerp( a, b, x ){
 	
 	x = ( 1 - Math.cos( x * Math.PI ) ) / 2;
 	return ( a*(1-x) + b*x );
@@ -100,13 +100,19 @@ function perlin( x, y ){
 	var u = fade(xf);
 	var v = fade(yf);
 	
-	var offset = cycleCount;// % cycleMax;
+	//var offset = cycleCount;// % cycleMax;
+	var offset = 0;
+	/*
+	var aa = Math.floor( Math.random() * 255 );
+	var ab = Math.floor( Math.random() * 255 );
+	var ba = Math.floor( Math.random() * 255 );
+	var bb = Math.floor( Math.random() * 255 );
+	*/
 	
 	var aa = p[p[xi  + offset] + yi   + offset];
 	var ab = p[p[xi  + offset] + yi+1 + offset];
 	var ba = p[p[xi+1+ offset] + yi   + offset];
 	var bb = p[p[xi+1+ offset] + yi+1 + offset];
-	
 	
 	var x0 = lerp( grad(aa, xf, yf), grad(ba, xf, yf), u );
 	var x1 = lerp( grad(ab, xf, yf), grad(bb, xf, yf), u );
@@ -153,12 +159,12 @@ function getPerlinNoiseArray( width, height, numSteps, numOctaves, persistence )
 			arr[arr.length] = OctavePerlin( i, j, numOctaves, persistence );
 		}
 	}
-	
+	/*
 	cycleCount++;
 	
 	if( cycleCount == cycleMax ){
 		cycleCount = 0;
-	}
+	}*/
 	
 	return arr;
 }
