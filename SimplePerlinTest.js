@@ -48,6 +48,7 @@ function main(){
 		dummyRGBA[4*i] = dummyRGBA[4*i + 1] = 0;
 		dummyRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[i]));
 		dummyRGBA[4*i + 3] = 255;
+		console.log(dummyRGBA[4*i + 2]);
 	}
 
 	dummyDataTex = new THREE.DataTexture( dummyRGBA, 16, 16, THREE.RGBAFormat );
