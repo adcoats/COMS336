@@ -22,13 +22,16 @@ var islanddummy;
 
 // The data texture for the water.
 var waterDataTex;
-var DIM = 128;
+var DIM = 256;
 var numSteps = DIM * 2;
 
 // Our array of Perlin Generated Values
 var numOctaves = 4;
 var persistence = 0.25;
 var perlinValues;
+
+// The water's radius
+var WATER_RADIUS = 200;
 
 // Offset our array of perlin values
 var offset = 0;
@@ -156,14 +159,31 @@ function handleKeyPress(event)
   if (cameraControl(camera, ch)) return;
 }
 
+function draw2(){
+	
+	var x;
+	var z;
+	
+	//for( var i = 0; i < plane.vertices.length; i++ ){
+	for( var i = 0; i < 5; i++ ){
+		var x = Math.floor(lerp( 0, DIM, plane.vertices[i].x + plane.radius ));
+		var z = Math.floor(lerp( 0, DIM, plane.vertices[i].z + plane.radius ));
+		
+		console.log(x.toString() + ", " + z.toString());
+	}
+	
+}
+
 function draw(){
   
 	var waterRGBA = new Uint8Array(numSteps * numSteps * 4);
    
 	for(var i=0; i< perlinValues.length; i++){
 		
+		var index = (i + offset) % perlinValues.length;
+		
 		waterRGBA[4*i] = waterRGBA[4*i + 1] = 0;
-		waterRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[i]));
+		waterRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[index]));
 		waterRGBA[4*i + 3] = 255;
 	}
 	waterDataTex = new THREE.DataTexture( waterRGBA, DIM, DIM, THREE.RGBAFormat );
@@ -178,6 +198,11 @@ function draw(){
 	water.position.set(0, 1, 0);
 	water.name = waterName;
 	scene.add(water);
+	
+	offset++;
+	if( offset >= maxOffset ){
+		offset = 0;
+	}
 }
 
 function start()
@@ -249,7 +274,7 @@ function start()
   scene.add(island);
   
   // create water
-  plane = new THREE.CircleGeometry( 200, 128 );
+  plane = new THREE.CircleGeometry( WATER_RADIUS, 128 );
   //var watertexture = THREE.ImageUtils.loadTexture("../images/water.jpg");
   //var watermaterial = new THREE.MeshPhongMaterial( {map : watertexture, side: THREE.DoubleSide, transparent : true, opacity : 0.6 } );
   watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .75, refractionRatio : 1.333, transparent : true, opacity : 0.6});	// refractionRatio : 0.66,  side: THREE.DoubleSide,
@@ -275,17 +300,25 @@ function start()
   // Generate our array of Perlin Values
   perlinValues = getPerlinNoiseArray( DIM, DIM, numSteps, numOctaves, persistence );
   
-  console.log( (numSteps * numSteps).toString() );
-  console.log( perlinValues.length );
+  draw();
+  draw2();
+  
+  // Trying to limit the framerate: https://github.com/mrdoob/three.js/issues/642
 
   var render = function () {
-    requestAnimationFrame( render );
+	
+	//requestAnimationFrame(render)
 	if (animate)
 	{
-		draw();
+		//draw();
 	}
 	renderer.render(scene, camera);
+
   };
 
-  render();
+  setInterval( function(){ 
+	requestAnimationFrame(render);
+  }, 1000 / 30 );
+  
+  //render();
 }
