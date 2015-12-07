@@ -16,13 +16,12 @@ var imageNames = [
 var scene;		
 var camera;
 
-
 // object data
 var islanddummy;
 
 // The data texture for the water.
 var waterDataTex;
-var DIM = 256;
+var DIM = 32;
 var numSteps = DIM * 2;
 
 // Our array of Perlin Generated Values
@@ -33,8 +32,12 @@ var perlinValues;
 // The water's radius
 var WATER_RADIUS = 200;
 
+var waterDrawCounter = 0;
+var waterDrawCounterMax = 6;
+
 // Offset our array of perlin values
 var offset = 0;
+var offset2 = 0;
 var maxOffset = numSteps * numSteps;
 
 // The material for the water
@@ -69,22 +72,22 @@ function cameraControl(c, ch)
   {
   // camera controls
   case 'w':
-    c.translateZ(-0.3);
+    c.translateZ(-1);
     return true;
   case 'a':
-    c.translateX(-0.3);
+    c.translateX(-1);
     return true;
   case 's':
-    c.translateZ(0.3);
+    c.translateZ(1);
     return true;
   case 'd':
-    c.translateX(0.3);
+    c.translateX(1);
     return true;
   case 'r':
-    c.translateY(0.3);
+    c.translateY(1);
     return true;
   case 'f':
-    c.translateY(-0.3);
+    c.translateY(-1);
     return true;
   case 'j':
     // need to do extrinsic rotation about world y axis, so multiply camera's quaternion
@@ -164,14 +167,39 @@ function draw2(){
 	var x;
 	var z;
 	
-	//for( var i = 0; i < plane.vertices.length; i++ ){
-	for( var i = 0; i < 5; i++ ){
-		var x = Math.floor(lerp( 0, DIM, plane.vertices[i].x + plane.radius ));
-		var z = Math.floor(lerp( 0, DIM, plane.vertices[i].z + plane.radius ));
+	//console.log(plane.vertices.length);
+	
+	for( var i = 0; i < plane.vertices.length; i++ ){
+		var x = Math.floor(lerp( 0, numSteps-1, (plane.vertices[i].x + 100 )));
+		var y = Math.floor(lerp( 0, numSteps-1, (plane.vertices[i].y + 100 )));
 		
-		console.log(x.toString() + ", " + z.toString());
+		//console.log( plane.vertices[i].x);
+		
+		//var x = (xi + offset2) % perlinValues.length;
+		//var y = (yi + offset2) % perlinValues.length;
+		
+		//var x = xi % perlinValues.length;
+		//var y = yi % perlinValues.length;
+		
+		var perlinIndex = ((x * numSteps + y) + offset2) % perlinValues.length;
+		var yOff = perlinValues[perlinIndex];
+		
+		var yOffRanged = (lerp( -5, 5, yOff) + plane.vertices[i].z) / 2;
+		
+		
+		
+		plane.vertices[i].setZ(yOffRanged);
+
+		plane.verticesNeedUpdate = true;
+		
 	}
 	
+	//console.log(plane.vertices[0].x + ", " + plane.vertices[0].y + ", " + plane.vertices[0].z);
+	
+	offset2++;
+	if( offset2 >= perlinValues.length ){
+		offset2 = 0;
+	}
 }
 
 function draw(){
@@ -274,8 +302,10 @@ function start()
   scene.add(island);
   
   // create water
-  plane = new THREE.CircleGeometry( WATER_RADIUS, 128 );
+  //plane = new THREE.CircleGeometry( WATER_RADIUS, 128 );
+  plane = new THREE.PlaneGeometry( 200, 200, 50, 50 );
   //var watertexture = THREE.ImageUtils.loadTexture("../images/water.jpg");
+  //var watertexture = new THREE.MeshPhongMaterial( {color: 0x00FFFF} );
   //var watermaterial = new THREE.MeshPhongMaterial( {map : watertexture, side: THREE.DoubleSide, transparent : true, opacity : 0.6 } );
   watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .75, refractionRatio : 1.333, transparent : true, opacity : 0.6});	// refractionRatio : 0.66,  side: THREE.DoubleSide,
   watermaterial.wireframe = false;
@@ -300,8 +330,8 @@ function start()
   // Generate our array of Perlin Values
   perlinValues = getPerlinNoiseArray( DIM, DIM, numSteps, numOctaves, persistence );
   
-  draw();
-  draw2();
+  //draw();
+  //draw2();
   
   // Trying to limit the framerate: https://github.com/mrdoob/three.js/issues/642
 
@@ -310,7 +340,11 @@ function start()
 	//requestAnimationFrame(render)
 	if (animate)
 	{
-		//draw();
+		waterDrawCounter++;
+		if( waterDrawCounter == waterDrawCounterMax ){
+			draw2();
+			waterDrawCounter = 0;
+		}
 	}
 	renderer.render(scene, camera);
 
