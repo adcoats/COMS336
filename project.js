@@ -25,19 +25,25 @@ var DIM = 32;
 var numSteps = DIM * 2;
 
 // Our array of Perlin Generated Values
-var numOctaves = 4;
-var persistence = 0.25;
+var numOctaves = 3;
+var persistence = 0.15;
 var perlinValues;
 
 // The water's radius
 var WATER_RADIUS = 200;
 
 var waterDrawCounter = 0;
-var waterDrawCounterMax = 6;
+var waterDrawCounterMax = 2;
+
+// Wave constants
+var WAVE_MAX = 2;
+var WAVE_MIN = -1;
+var WAVE_OFF = 1;
 
 // Offset our array of perlin values
 var offset = 0;
 var offset2 = 0;
+var offset3 = 0;
 var maxOffset = numSteps * numSteps;
 
 // The material for the water
@@ -167,34 +173,34 @@ function draw2(){
 	var x;
 	var z;
 	
-	//console.log(plane.vertices.length);
-	
 	for( var i = 0; i < plane.vertices.length; i++ ){
 		var x = Math.floor(lerp( 0, numSteps-1, (plane.vertices[i].x + 100 )));
-		var y = Math.floor(lerp( 0, numSteps-1, (plane.vertices[i].y + 100 )));
-		
-		//console.log( plane.vertices[i].x);
-		
-		//var x = (xi + offset2) % perlinValues.length;
-		//var y = (yi + offset2) % perlinValues.length;
-		
-		//var x = xi % perlinValues.length;
-		//var y = yi % perlinValues.length;
+		var y = Math.floor(lerp( 0, numSteps-1, (plane.vertices[i].y + 100 ))); 
 		
 		var perlinIndex = ((x * numSteps + y) + offset2) % perlinValues.length;
-		var yOff = perlinValues[perlinIndex];
+		var zOff = perlinValues[perlinIndex];
 		
-		var yOffRanged = (lerp( -5, 5, yOff) + plane.vertices[i].z) / 2;
+		var cur = plane.vertices[i].z
 		
+		var above = cur + WAVE_OFF;
+		var below = cur - WAVE_OFF;
 		
+		if( above > WAVE_MAX ){
+			above = WAVE_MAX;
+		}
 		
-		plane.vertices[i].setZ(yOffRanged);
-
+		if( below < WAVE_MIN ){
+			below = WAVE_MIN;
+		}
+		
+		//var zOffRanged = lerp( -2, 3, zOff)*.1 + plane.vertices[i].z*0.9;
+		var zOffRanged = lerp( below, above, zOff);// + plane.vertices[i].z;
+		
+		plane.vertices[i].setZ(zOffRanged);
 		plane.verticesNeedUpdate = true;
 		
+		
 	}
-	
-	//console.log(plane.vertices[0].x + ", " + plane.vertices[0].y + ", " + plane.vertices[0].z);
 	
 	offset2++;
 	if( offset2 >= perlinValues.length ){
@@ -204,17 +210,19 @@ function draw2(){
 
 function draw(){
   
-	var waterRGBA = new Uint8Array(numSteps * numSteps * 4);
+	var waterRGBA = new Uint8Array(numSteps * numSteps * 20 * 20 * 4);
    
-	for(var i=0; i< perlinValues.length; i++){
+   var index;
+   
+	for(var i=0; i< waterRGBA.length; i++){
 		
-		var index = (i + offset) % perlinValues.length;
+		index = (Math.floor(i + offset/5)) % perlinValues.length;
 		
 		waterRGBA[4*i] = waterRGBA[4*i + 1] = 0;
-		waterRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[index]));
+		waterRGBA[4*i + 2] = parseInt(lerp(100,255,perlinValues[index]));
 		waterRGBA[4*i + 3] = 255;
 	}
-	waterDataTex = new THREE.DataTexture( waterRGBA, DIM, DIM, THREE.RGBAFormat );
+	waterDataTex = new THREE.DataTexture( waterRGBA, numSteps*20, numSteps*20, THREE.RGBAFormat );
 	waterDataTex.needsUpdate = true;
 	watermaterial.normalMap = waterDataTex;
 	
@@ -227,10 +235,18 @@ function draw(){
 	water.name = waterName;
 	scene.add(water);
 	
+	
+	offset--;
+	
+	if( offset < 0 ){
+		offset = maxOffset;
+	}
+	/*
 	offset++;
+	
 	if( offset >= maxOffset ){
 		offset = 0;
-	}
+	}*/
 }
 
 function start()
@@ -244,7 +260,7 @@ function start()
   // create camera
   camera = new THREE.PerspectiveCamera( 45, 1.5, 0.1, 1000 );
   camera.position.x = 78;
-  camera.position.y = 60;
+  camera.position.y = 35;
   camera.position.z = 78;
   camera.lookAt(new THREE.Vector3(0, 0, 0));
   
@@ -303,11 +319,11 @@ function start()
   
   // create water
   //plane = new THREE.CircleGeometry( WATER_RADIUS, 128 );
-  plane = new THREE.PlaneGeometry( 200, 200, 50, 50 );
-  //var watertexture = THREE.ImageUtils.loadTexture("../images/water.jpg");
+  plane = new THREE.PlaneGeometry( 200, 200, 150, 150 );
+  //var waterimage = THREE.ImageUtils.loadTexture("../images/water.jpg");
   //var watertexture = new THREE.MeshPhongMaterial( {color: 0x00FFFF} );
   //var watermaterial = new THREE.MeshPhongMaterial( {map : watertexture, side: THREE.DoubleSide, transparent : true, opacity : 0.6 } );
-  watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .75, refractionRatio : 1.333, transparent : true, opacity : 0.6});	// refractionRatio : 0.66,  side: THREE.DoubleSide,
+  watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .25, refractionRatio : 1.333, transparent : true, opacity : 0.6, specular: 0x00ffff, shininess: 40});	// refractionRatio : 0.66,  side: THREE.DoubleSide,
   watermaterial.wireframe = false;
   
   
@@ -319,13 +335,21 @@ function start()
   
   // lights
   // sun
-  var directionalLight = new THREE.DirectionalLight( 0xffffff );
+  var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.75);
   directionalLight.position.set( -1, 1, 1 );
   scene.add( directionalLight );
   
-  // ambient
-  var light = new THREE.AmbientLight( 0x333333 );
-  scene.add( light );
+ // var pointLight = new THREE.PointLight( 0xffffff, 2, 300 );
+  // pointLight.position.set( -100, 100, 100 );
+  // scene.add(pointLight);
+  
+   // var pointLight2 = new THREE.PointLight( 0xffffff, 0.5, 300 );
+  // pointLight2.position.set( 100, 100, -100 );
+  // scene.add(pointLight2);
+  
+  //ambient
+  // var light = new THREE.AmbientLight( 0x333333 );
+  // scene.add( light );
 	
   // Generate our array of Perlin Values
   perlinValues = getPerlinNoiseArray( DIM, DIM, numSteps, numOctaves, persistence );
@@ -340,6 +364,7 @@ function start()
 	//requestAnimationFrame(render)
 	if (animate)
 	{
+		//draw();
 		waterDrawCounter++;
 		if( waterDrawCounter == waterDrawCounterMax ){
 			draw2();
