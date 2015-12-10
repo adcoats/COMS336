@@ -174,12 +174,15 @@ function draw2(){
 	var z;
 	
 	for( var i = 0; i < plane.vertices.length; i++ ){
+		
+		// Determine the x and y values a vertex maps to to get the corresponding noise value.
 		var x = Math.floor(lerp( 0, numSteps-1, (plane.vertices[i].x + 100 )));
 		var y = Math.floor(lerp( 0, numSteps-1, (plane.vertices[i].y + 100 ))); 
 		
 		var perlinIndex = ((x * numSteps + y) + offset2) % perlinValues.length;
 		var zOff = perlinValues[perlinIndex];
 		
+		// This section limits the amount that wave heights can change
 		var cur = plane.vertices[i].z
 		
 		var above = cur + WAVE_OFF;
@@ -193,15 +196,14 @@ function draw2(){
 			below = WAVE_MIN;
 		}
 		
-		//var zOffRanged = lerp( -2, 3, zOff)*.1 + plane.vertices[i].z*0.9;
+		// Perform a weighted average between new heights and old heights to smooth transitions.
 		var zOffRanged;
 		if (i > 0) {
 			if (i < 150) {
 				zOffRanged = ((3*lerp( below, above, zOff)) + plane.vertices[i-1].z)/4;
 			}
-			else { //+ plane.vertices[i-150].z
-				zOffRanged = ((70*lerp( below, above, zOff)) + (25*plane.vertices[i-1].z) + (5*plane.vertices[i-150].z))/100;
-				//zOffRanged = ((3*lerp( below, above, zOff)) + plane.vertices[i-1].z)/4;
+			else { 
+				zOffRanged = ((70*lerp( below, above, zOff)) + (25*plane.vertices[i-1].z) + (5*plane.vertices[i-150].z))/100;	
 			}
 		}
 		else {
@@ -210,10 +212,9 @@ function draw2(){
 		
 		plane.vertices[i].setZ(zOffRanged);
 		plane.verticesNeedUpdate = true;
-		
-		
 	}
 	
+	// Offset the values used to make it dynamic.
 	offset2++;
 	if( offset2 >= perlinValues.length ){
 		offset2 = 0;
@@ -222,10 +223,13 @@ function draw2(){
 
 function draw(){
   
+  // Creating the Uint8Array and DataTexture as outlined here: http://stackoverflow.com/questions/28188775/generate-texture-from-array-in-threejs
+  
 	var waterRGBA = new Uint8Array(numSteps * numSteps * Math.pow(25, 2) * 4);
    
     var index;
    
+   // Update the normal map with a new Z-vector
 	for(var i=0; i< waterRGBA.length; i++){
 		
 		index = (Math.floor(i + offset)) % perlinValues.length;
@@ -234,6 +238,8 @@ function draw(){
 		waterRGBA[4*i + 2] = Math.floor(lerp(100,255,perlinValues[index]));
 		waterRGBA[4*i + 3] = 255;
 	}
+	
+	// Update the normal map and reapply
 	if(waterDataTex != null)
 		waterDataTex.dispose();
 	waterDataTex = new THREE.DataTexture( waterRGBA, numSteps*25, numSteps*25, THREE.RGBAFormat );
@@ -250,7 +256,7 @@ function draw(){
 	water.name = waterName;
 	scene.add(water);
 	
-	
+	// Update the offset to make the map dynamic
 	offset--;
 	
 	if( offset < 0 ){
@@ -330,13 +336,14 @@ function start()
   watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .5, refractionRatio : 1.333, transparent : true, opacity : 0.6, specular: 0xffffff, shininess: 40});
   watermaterial.wireframe = false;
   
-  
+  // Create our water's plane
   var water = new THREE.Mesh( plane, watermaterial );
   water.rotateX(-1.571);
   water.position.set(0, 1, 0);
   water.name = waterName;
   scene.add(water);
   
+  // Create our water's sea floor
   var square = new THREE.PlaneGeometry( 200, 200 );
   var squarematerial = new THREE.MeshLambertMaterial({color: 0x926239});
   var seafloor = new THREE.Mesh( square, squarematerial );
@@ -380,6 +387,7 @@ function start()
 
   };
 
+  // 30 Frames per second
   setInterval( function(){ 
 	requestAnimationFrame(render);
   }, 1000 / 30 );
