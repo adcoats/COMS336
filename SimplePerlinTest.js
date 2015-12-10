@@ -4,10 +4,64 @@ var camera;
 var WIDTH = 900;
 var HEIGHT = 600;
 var DIM = 256;
+var numSteps = DIM * 2;
+
+var perlinValues;
+var dummyRGBA;
+var dummyDataTex;
+var scene;
+var material;
+var plane;
+var geometry;
+
+var drawCounter = 0;
+var drawCounterMax = 5;
+
+var offset = 0;
 
 function assignPerlinValues(){
-	var perlinValues = getPerlinNoiseArray( 3, 3, 4, 2, 1/2 );
-	console.log(perlinValues);
+	perlinValues = getPerlinNoiseArray( DIM, DIM, numSteps, 2, 1/2 );
+}
+
+function draw(){
+			
+			dummyRGBA = new Uint8Array(numSteps * numSteps * 4);
+			for(i=0; i< perlinValues.length; i++){
+				
+				var x = i % numSteps;
+				var y = i - (x*numSteps);
+				
+				var tmp = x + offset;
+				if( tmp > numSteps-1 ){
+					tmp = 0;
+				}
+				
+				var index = tmp * numSteps + y;
+				
+				dummyRGBA[4*i] = Math.floor(lerp(0,0, Math.cos(Math.PI*perlinValues[index])));
+				dummyRGBA[4*i + 1] = Math.floor(lerp(0,0,Math.sin(Math.PI*perlinValues[index])));
+				dummyRGBA[4*i + 2] = Math.floor(lerp(0,255,perlinValues[index]));
+				dummyRGBA[4*i + 3] = 255;
+				
+			}
+
+			dummyDataTex = new THREE.DataTexture( dummyRGBA, DIM, DIM, THREE.RGBAFormat );
+			dummyDataTex.needsUpdate = true;
+
+			scene.remove( scene.getObjectByName("plane") );
+			
+			material.normalMap = dummyDataTex;
+			var plane = new THREE.Mesh( geometry, material );
+			plane.scale.set(1, 1, 1);
+			plane.name = "plane";
+	  
+			// Add it to the scene
+			scene.add( plane );
+			
+			offset++;
+			if( offset >= numSteps ){
+				offset = 0;
+			}
 }
 
 function main(){
@@ -15,7 +69,7 @@ function main(){
 	/*
 	 * Set up the scene and camera.
 	 */
-	var scene = new THREE.Scene();
+	scene = new THREE.Scene();
 	camera = new THREE.PerspectiveCamera( 45, WIDTH / HEIGHT, 1, 1000 );
 	camera.position.x = 0;
 	camera.position.y = 2;
@@ -38,18 +92,14 @@ function main(){
 	var light = new THREE.AmbientLight( 0x333333 );
 	scene.add( light );
 	
-	var numSteps = DIM * 2;
-	
-	var perlinValues = getPerlinNoiseArray( DIM, DIM, numSteps, 2, 1/2 );
-	//console.log(perlinValues);
+	assignPerlinValues();
 	
 	dummyRGBA = new Uint8Array(numSteps * numSteps * 4);
 	for(var i=0; i< perlinValues.length; i++){
 		
 		dummyRGBA[4*i] = dummyRGBA[4*i + 1] = 0;
-		dummyRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[i]));
+		dummyRGBA[4*i + 2] = Math.floor(lerp(0,255,perlinValues[i]));
 		dummyRGBA[4*i + 3] = 255;
-		//console.log(dummyRGBA[4*i + 2]);
 	}
 
 	dummyDataTex = new THREE.DataTexture( dummyRGBA, DIM, DIM, THREE.RGBAFormat );
@@ -61,49 +111,28 @@ function main(){
 	 * Adding an object
 	 */
 	  // Make an object
-	var geometry = new THREE.PlaneGeometry(3, 3, 3);
+	geometry = new THREE.PlaneGeometry(3, 3, 3);
 	//var material = new THREE.MeshBasicMaterial( {color: 0x00FaFF} );
-	var material = new THREE.MeshPhongMaterial( {color: 0x00FFFF} );
+	material = new THREE.MeshPhongMaterial( {color: 0x00F0FF, shininess: 0.5, specular: 0xFF0000} );
 	//var material = new THREE.MeshPhongMaterial( {map: dummyDataTex} );
 	material.normalMap = dummyDataTex;
-	var plane = new THREE.Mesh( geometry, material );
+	plane = new THREE.Mesh( geometry, material );
+	
 	plane.scale.set(1, 1, 1);
 	plane.name = "plane";
 	  
 	// Add it to the scene
 	scene.add( plane );
 	
-	
-	
 	var render = function () {
 		requestAnimationFrame( render );
 		
+		if( drawCounter == drawCounterMax ){
+			draw();
+			drawCounter = 0;
+		}
+		drawCounter++;
 			
-			perlinValues = getPerlinNoiseArray( DIM, DIM, numSteps, 2, 1/2 );
-			
-			
-			dummyRGBA = new Uint8Array(numSteps * numSteps * 4);
-			for(i=0; i< perlinValues.length; i++){
-				
-				dummyRGBA[4*i] = dummyRGBA[4*i + 1] = 0;
-				dummyRGBA[4*i + 2] = parseInt(lerp(0,255,perlinValues[i]));
-				dummyRGBA[4*i + 3] = 255;
-				
-			}
-
-			dummyDataTex = new THREE.DataTexture( dummyRGBA, DIM, DIM, THREE.RGBAFormat );
-			dummyDataTex.needsUpdate = true;
-
-			scene.remove( scene.getObjectByName("plane") );
-			
-			material.normalMap = dummyDataTex;
-			var plane = new THREE.Mesh( geometry, material );
-			plane.scale.set(1, 1, 1);
-			plane.name = "plane";
-	  
-			// Add it to the scene
-			scene.add( plane );
-				
 		renderer.render(scene, camera);
 	};
 

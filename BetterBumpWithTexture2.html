@@ -1,0 +1,199 @@
+<!--  
+This file is identical to BetterBumpWithTexture.html, except that we 
+explicitly load three.js from the local file system, and not the minified 
+version three.min.js from the www.  (The issue is that the minified version
+has removed the function for calculating tangent vectors.)
+-->		
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Texture with lighting</title>
+</head>
+
+<body> 
+	<canvas id="theCanvas" width="900" height="600">
+    Please use a browser that supports "canvas"
+    </canvas>
+
+<li>SPACE - pause rotation
+<li>x - rotate about x axis
+<li>y - rotate about y axis
+<li>z - rotate about z axis
+<p>
+Camera controls:
+<ul style="list-style:none;">
+<li>w, a, s, d - move forward, left, back, right
+<li>r, f - move up, down
+<li>i, j, k, l - look up, left, down, right
+<li>I, J, K, L - orbit down, right, up, left
+<li>O - face origin
+<li>p - put camera at origin
+<li>W - decrease fov
+<li>S - increase fov
+<li>1, 2, 3, 4, 5 - change texture parameters
+</ul>
+
+<script id="vertexLightingShader" type="x-shader/x-vertex">
+precision mediump float;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+uniform mat3 normalMatrix;
+uniform vec4 lightPosition;
+
+attribute vec4 a_Position;
+attribute vec3 a_Normal;
+attribute vec2 a_TexCoord;
+attribute vec4 a_Tangent;
+
+varying vec3 fL;
+//varying vec3 fN;
+varying vec3 fV;
+varying vec2 fTexCoord;
+void main() 
+{
+  // work in eye coordinates as usual
+  
+  // convert position to eye coords
+  vec4 positionEye = view * model * a_Position;
+
+  // convert light position to eye coords
+  vec4 lightEye = view * lightPosition;
+
+  // vector to light, in eye coordinates
+  vec3 l = (lightEye - positionEye).xyz;
+
+  // vector from vertex position toward view point, in eye coords
+  vec3 v = normalize(-(positionEye).xyz);
+
+  // create the columns of the TBN matrix, T corresponds to x-direction, B to y-direction
+  // 
+  vec3 n = normalMatrix * a_Normal;
+  vec3 t = normalize((view * model * vec4(a_Tangent.xyz, 0.0)).xyz);
+  vec3 b = cross(n, t);
+
+  // now transform l and v into tangent coordinates
+  // This is equivalent to taking the transpose (inverse) of [T B N], times vector l
+  vec3 temp;
+  temp.x = dot(l, t);
+  temp.y = dot(l, b);
+  temp.z = dot(l, n);
+  fL = normalize(temp);
+ 
+  // transpose of [T B N], times vector v
+  temp.x = dot(v, t);
+  temp.y = dot(v, b);
+  temp.z = dot(v, n);
+  fV = normalize(temp);
+
+  fTexCoord = a_TexCoord;
+  gl_Position = projection * view * model * a_Position;
+}
+</script>
+
+
+<script id="fragmentLightingShader" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform mat3 materialProperties;
+uniform mat3 lightProperties;
+uniform float shininess;
+uniform sampler2D texSampler;
+uniform sampler2D normalSampler;
+uniform mat3 normalMatrix;
+
+varying vec3 fL;
+//varying vec3 fN; // NOT USED
+varying vec3 fV;
+varying vec2 fTexCoord;
+
+void main() 
+{
+  // normalize after interpolating
+  //vec3 N = normalize(fN);
+  vec3 L = normalize(fL);
+  vec3 V = normalize(fV);
+
+  // texture contains normal map rescaled to [0, 1], double and subtract 1 to reconstruct
+  vec4 c = texture2D(normalSampler, fTexCoord);
+  vec3 normal = 2.0 * c.xyz - vec3(1.0, 1.0, 1.0);
+  vec3 N = normalize(normal);
+
+  // Remainder of shader is the same as before
+  
+  // reflected vector
+  vec3 R = reflect(-L, N);
+
+  // get the columns out of the light and material properties.  We keep the surface
+  // properties separate, so we can mess with them using the sampled texture value
+  vec4 ambientSurface = vec4(materialProperties[0], 1.0);
+  vec4 diffuseSurface = vec4(materialProperties[1], 1.0);
+  vec4 specularSurface = vec4(materialProperties[2], 1.0);
+
+  vec4 ambientLight = vec4(lightProperties[0], 1.0);
+  vec4 diffuseLight = vec4(lightProperties[1], 1.0);
+  vec4 specularLight = vec4(lightProperties[2], 1.0);
+
+  // apply the sampled color texture
+  vec4 color = texture2D(texSampler, fTexCoord);
+  diffuseSurface = color;
+
+  // lighting factors as usual
+
+  // Lambert's law, clamp negative values to zero
+  float diffuseFactor = max(0.0, dot(L, N));
+
+  // specular factor from Phong reflection model
+  float specularFactor = pow(max(0.0, dot(V, R)), shininess);
+
+  // add the components together, note that vec4 * vec4 is componentwise multiplication,
+  // not a dot product
+  vec4 ambient = ambientLight * ambientSurface;
+  vec4 diffuse = diffuseFactor * diffuseLight * diffuseSurface;
+  vec4 specular = specularFactor * specularLight * specularSurface;
+  gl_FragColor = ambient + diffuse + specular;
+  gl_FragColor.a = 1.0;
+}
+</script>
+
+<script id="vertexColorShader" type="x-shader/x-vertex">
+uniform mat4 transform;
+attribute vec4 a_Position;
+attribute vec4 a_Color;
+varying vec4 color;
+void main() 
+{
+  color = a_Color;
+  gl_Position = transform * a_Position;
+}
+</script>
+
+<script id="fragmentColorShader" type="x-shader/x-fragment">
+precision mediump float;
+varying vec4 color;
+void main() 
+{
+  gl_FragColor = color;
+}
+</script>
+
+		<script src="../teal_book/webgl-utils.js"></script>
+		<script src="../teal_book/webgl-debug.js"></script>
+		<script src="../teal_book/cuon-utils.js"></script>
+		<script src="../teal_book/cuon-matrix.js"></script>
+		
+		<!-- Requires three.js, not three.min.js -->
+		<script src="../threejs/three.js"></script>
+		
+    <!-- the OBJ file loader is not included in the regular three.js file -->
+			<script src="../threejs/OBJLoader.js"></script>
+		
+		    <script src="Camera.js"></script>
+			<script src="perlin.js"></script>
+		<script src="BetterBumpWithTexture2.js"></script>
+		<script>window.onload = main</script>
+</body>
+</html>
