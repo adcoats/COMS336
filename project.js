@@ -33,7 +33,7 @@ var perlinValues;
 var WATER_RADIUS = 200;
 
 var waterDrawCounter = 0;
-var waterDrawCounterMax = 2;
+var waterDrawCounterMax = 3;
 
 // Wave constants
 var WAVE_MAX = 2;

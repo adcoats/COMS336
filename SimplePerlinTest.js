@@ -15,7 +15,7 @@ var plane;
 var geometry;
 
 var drawCounter = 0;
-var drawCounterMax = 5;
+var drawCounterMax = 2;
 
 var offset = 0;
 
@@ -72,7 +72,7 @@ function main(){
 	scene = new THREE.Scene();
 	camera = new THREE.PerspectiveCamera( 45, WIDTH / HEIGHT, 1, 1000 );
 	camera.position.x = 0;
-	camera.position.y = 2;
+	camera.position.y = 0;
 	camera.position.z = 5;
 	camera.lookAt(new THREE.Vector3(0, 0, 0));
 	
@@ -113,7 +113,7 @@ function main(){
 	  // Make an object
 	geometry = new THREE.PlaneGeometry(3, 3, 3);
 	//var material = new THREE.MeshBasicMaterial( {color: 0x00FaFF} );
-	material = new THREE.MeshPhongMaterial( {color: 0x00F0FF, shininess: 0.5, specular: 0xFF0000} );
+	material = new THREE.MeshPhongMaterial( {color: 0x00eeee, shininess: 0.7, specular: 0xfffffff} );
 	//var material = new THREE.MeshPhongMaterial( {map: dummyDataTex} );
 	material.normalMap = dummyDataTex;
 	plane = new THREE.Mesh( geometry, material );
