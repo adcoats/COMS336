@@ -194,7 +194,19 @@ function draw2(){
 		}
 		
 		//var zOffRanged = lerp( -2, 3, zOff)*.1 + plane.vertices[i].z*0.9;
-		var zOffRanged = lerp( below, above, zOff);// + plane.vertices[i].z;
+		var zOffRanged;
+		if (i > 0) {
+			if (i < 150) {
+				zOffRanged = ((3*lerp( below, above, zOff)) + plane.vertices[i-1].z)/4;
+			}
+			else { //+ plane.vertices[i-150].z
+				zOffRanged = ((70*lerp( below, above, zOff)) + (25*plane.vertices[i-1].z) + (5*plane.vertices[i-150].z))/100;
+				//zOffRanged = ((3*lerp( below, above, zOff)) + plane.vertices[i-1].z)/4;
+			}
+		}
+		else {
+			zOffRanged = lerp( below, above, zOff);
+		}
 		
 		plane.vertices[i].setZ(zOffRanged);
 		plane.verticesNeedUpdate = true;
@@ -210,21 +222,24 @@ function draw2(){
 
 function draw(){
   
-	var waterRGBA = new Uint8Array(numSteps * numSteps * 20 * 20 * 4);
+	var waterRGBA = new Uint8Array(numSteps * numSteps * Math.pow(25, 2) * 4);
    
-   var index;
+    var index;
    
 	for(var i=0; i< waterRGBA.length; i++){
 		
-		index = (Math.floor(i + offset/5)) % perlinValues.length;
+		index = (Math.floor(i + offset)) % perlinValues.length;
 		
 		waterRGBA[4*i] = waterRGBA[4*i + 1] = 0;
-		waterRGBA[4*i + 2] = parseInt(lerp(100,255,perlinValues[index]));
+		waterRGBA[4*i + 2] = Math.floor(lerp(100,255,perlinValues[index]));
 		waterRGBA[4*i + 3] = 255;
 	}
-	waterDataTex = new THREE.DataTexture( waterRGBA, numSteps*20, numSteps*20, THREE.RGBAFormat );
+	if(waterDataTex != null)
+		waterDataTex.dispose();
+	waterDataTex = new THREE.DataTexture( waterRGBA, numSteps*25, numSteps*25, THREE.RGBAFormat );
 	waterDataTex.needsUpdate = true;
 	watermaterial.normalMap = waterDataTex;
+	
 	
 	// Redraw the water
 	scene.remove( scene.getObjectByName(waterName) );
@@ -260,7 +275,7 @@ function start()
   // create camera
   camera = new THREE.PerspectiveCamera( 45, 1.5, 0.1, 1000 );
   camera.position.x = 78;
-  camera.position.y = 35;
+  camera.position.y = 78;
   camera.position.z = 78;
   camera.lookAt(new THREE.Vector3(0, 0, 0));
   
@@ -323,7 +338,7 @@ function start()
   //var waterimage = THREE.ImageUtils.loadTexture("../images/water.jpg");
   //var watertexture = new THREE.MeshPhongMaterial( {color: 0x00FFFF} );
   //var watermaterial = new THREE.MeshPhongMaterial( {map : watertexture, side: THREE.DoubleSide, transparent : true, opacity : 0.6 } );
-  watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .25, refractionRatio : 1.333, transparent : true, opacity : 0.6, specular: 0x00ffff, shininess: 40});	// refractionRatio : 0.66,  side: THREE.DoubleSide,
+  watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .5, refractionRatio : 1.333, transparent : true, opacity : 0.6, specular: 0xffffff, shininess: 40});	// refractionRatio : 0.66,  side: THREE.DoubleSide,
   watermaterial.wireframe = false;
   
   
@@ -333,28 +348,45 @@ function start()
   water.name = waterName;
   scene.add(water);
   
+  var square = new THREE.PlaneGeometry( 200, 200 );
+  var squarematerial = new THREE.MeshLambertMaterial({color: 0x926239});
+  var seafloor = new THREE.Mesh( square, squarematerial );
+  seafloor.rotateX(-1.571);
+  seafloor.position.set(0, -50, 0);
+  scene.add(seafloor);
+  
+  
   // lights
   // sun
-  var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.75);
+  var directionalLight = new THREE.DirectionalLight( 0xffffff);
   directionalLight.position.set( -1, 1, 1 );
   scene.add( directionalLight );
   
- // var pointLight = new THREE.PointLight( 0xffffff, 2, 300 );
+  // var directionalLight2 = new THREE.DirectionalLight( 0xffffff, 0.5);
+  // directionalLight2.position.set( 1, 1, 1 );
+  // scene.add( directionalLight2 );
+  
+  // var pointLight = new THREE.PointLight( 0xffffff, 2, 300 );
   // pointLight.position.set( -100, 100, 100 );
   // scene.add(pointLight);
   
-   // var pointLight2 = new THREE.PointLight( 0xffffff, 0.5, 300 );
+  // var spotLight = new THREE.SpotLight( 0xffffff, 1, 300 );
+  // spotLight.position.set( 0, 100, 0 );
+  // spotLight.target = island;
+  // scene.add(spotLight);
+  
+  // var pointLight2 = new THREE.PointLight( 0xffffff, 0.5, 300 );
   // pointLight2.position.set( 100, 100, -100 );
   // scene.add(pointLight2);
   
   //ambient
-  // var light = new THREE.AmbientLight( 0x333333 );
-  // scene.add( light );
+  var light = new THREE.AmbientLight( 0x333333 );
+  scene.add( light );
 	
   // Generate our array of Perlin Values
   perlinValues = getPerlinNoiseArray( DIM, DIM, numSteps, numOctaves, persistence );
   
-  //draw();
+  draw();
   //draw2();
   
   // Trying to limit the framerate: https://github.com/mrdoob/three.js/issues/642
@@ -367,6 +399,7 @@ function start()
 		//draw();
 		waterDrawCounter++;
 		if( waterDrawCounter == waterDrawCounterMax ){
+			draw();
 			draw2();
 			waterDrawCounter = 0;
 		}
