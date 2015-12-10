@@ -15,7 +15,7 @@ var plane;
 var geometry;
 
 var drawCounter = 0;
-var drawCounterMax = 2;
+var drawCounterMax = 1;
 
 var offset = 0;
 
@@ -28,18 +28,20 @@ function draw(){
 			dummyRGBA = new Uint8Array(numSteps * numSteps * 4);
 			for(i=0; i< perlinValues.length; i++){
 				
-				var x = i % numSteps;
-				var y = i - (x*numSteps);
+				// var x = i % numSteps;
+				// var y = i - (x*numSteps);
 				
-				var tmp = x + offset;
-				if( tmp > numSteps-1 ){
-					tmp = 0;
-				}
+				// var tmp = x + offset;
+				// if( tmp > numSteps-1 ){
+					// tmp = 0;
+				// }
 				
-				var index = tmp * numSteps + y;
+				//var index = tmp * numSteps + y;
 				
-				dummyRGBA[4*i] = Math.floor(lerp(0,0, Math.cos(Math.PI*perlinValues[index])));
-				dummyRGBA[4*i + 1] = Math.floor(lerp(0,0,Math.sin(Math.PI*perlinValues[index])));
+				var index = (Math.floor(i + offset/2)) % perlinValues.length;
+				
+				dummyRGBA[4*i] = 0;//Math.floor(lerp(0,0, Math.cos(Math.PI*perlinValues[index])));
+				dummyRGBA[4*i + 1] = 0;//Math.floor(lerp(0,0,Math.sin(Math.PI*perlinValues[index])));
 				dummyRGBA[4*i + 2] = Math.floor(lerp(0,255,perlinValues[index]));
 				dummyRGBA[4*i + 3] = 255;
 				
@@ -78,14 +80,14 @@ function main(){
 	
 	var ourCanvas = document.getElementById('theCanvas');
 	var renderer = new THREE.WebGLRenderer({canvas: ourCanvas});
-	renderer.setClearColor( 0xffa500 );
+	renderer.setClearColor( 0xbbbbbb );
 	
 	/*
 	 * Set up the lights.
 	 */
 	// sun
 	var directionalLight = new THREE.DirectionalLight( 0xffffff );
-	directionalLight.position.set( -1, 1, 1 );
+	directionalLight.position.set( -1.5, 1, 1 );
 	scene.add( directionalLight );
 	
 	// ambient
@@ -124,18 +126,35 @@ function main(){
 	// Add it to the scene
 	scene.add( plane );
 	
-	var render = function () {
-		requestAnimationFrame( render );
+	// var render = function () {
+		// requestAnimationFrame( render );
 		
+		// if( drawCounter == drawCounterMax ){
+			// draw();
+			// drawCounter = 0;
+		// }
+		// drawCounter++;
+			
+		// renderer.render(scene, camera);
+	// };
+
+	// render();
+	
+var render = function () {
+	
+	//requestAnimationFrame(render)
+		//draw();
+		drawCounter++;
 		if( drawCounter == drawCounterMax ){
-			draw();
+			//draw();
 			drawCounter = 0;
 		}
-		drawCounter++;
-			
-		renderer.render(scene, camera);
-	};
+	renderer.render(scene, camera);
 
-	render();
+  };
+
+  setInterval( function(){ 
+	requestAnimationFrame(render);
+  }, 1000 / 30 );
 }
 

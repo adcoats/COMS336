@@ -33,7 +33,7 @@ var perlinValues;
 var WATER_RADIUS = 200;
 
 var waterDrawCounter = 0;
-var waterDrawCounterMax = 3;
+var waterDrawCounterMax = 2;
 
 // Wave constants
 var WAVE_MAX = 2;
@@ -256,12 +256,6 @@ function draw(){
 	if( offset < 0 ){
 		offset = maxOffset;
 	}
-	/*
-	offset++;
-	
-	if( offset >= maxOffset ){
-		offset = 0;
-	}*/
 }
 
 function start()
@@ -274,9 +268,9 @@ function start()
   
   // create camera
   camera = new THREE.PerspectiveCamera( 45, 1.5, 0.1, 1000 );
-  camera.position.x = 78;
-  camera.position.y = 78;
-  camera.position.z = 78;
+  camera.position.x = 0;
+  camera.position.y = 110;
+  camera.position.z = 130;
   camera.lookAt(new THREE.Vector3(0, 0, 0));
   
   // create a renderer for the scene on the canvas
@@ -304,7 +298,6 @@ function start()
 
   
   // Make a cube geometry object for the skybox
-  //var geometry = new THREE.BoxGeometry(1, 1, 1);
   var geometry = new THREE.SphereGeometry(1, 128, 128);
 
   // Create a mesh for the object, using the cube shader as the material
@@ -327,18 +320,14 @@ function start()
   var islandmaterial = new THREE.MeshLambertMaterial( { map : islandtexture } );
   // create sun object
   var island = new THREE.Mesh( sphere, islandmaterial );
-  island.scale.set(20, 20, 10);
+  island.scale.set(20, 20, 20);
   island.rotateX(1.571);
 
   scene.add(island);
   
   // create water
-  //plane = new THREE.CircleGeometry( WATER_RADIUS, 128 );
   plane = new THREE.PlaneGeometry( 200, 200, 150, 150 );
-  //var waterimage = THREE.ImageUtils.loadTexture("../images/water.jpg");
-  //var watertexture = new THREE.MeshPhongMaterial( {color: 0x00FFFF} );
-  //var watermaterial = new THREE.MeshPhongMaterial( {map : watertexture, side: THREE.DoubleSide, transparent : true, opacity : 0.6 } );
-  watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .5, refractionRatio : 1.333, transparent : true, opacity : 0.6, specular: 0xffffff, shininess: 40});	// refractionRatio : 0.66,  side: THREE.DoubleSide,
+  watermaterial = new THREE.MeshPhongMaterial({color : 0xadd8e6, envMap : ourCubeMap, side: THREE.DoubleSide, reflectivity : .5, refractionRatio : 1.333, transparent : true, opacity : 0.6, specular: 0xffffff, shininess: 40});
   watermaterial.wireframe = false;
   
   
@@ -361,23 +350,6 @@ function start()
   var directionalLight = new THREE.DirectionalLight( 0xffffff);
   directionalLight.position.set( -1, 1, 1 );
   scene.add( directionalLight );
-  
-  // var directionalLight2 = new THREE.DirectionalLight( 0xffffff, 0.5);
-  // directionalLight2.position.set( 1, 1, 1 );
-  // scene.add( directionalLight2 );
-  
-  // var pointLight = new THREE.PointLight( 0xffffff, 2, 300 );
-  // pointLight.position.set( -100, 100, 100 );
-  // scene.add(pointLight);
-  
-  // var spotLight = new THREE.SpotLight( 0xffffff, 1, 300 );
-  // spotLight.position.set( 0, 100, 0 );
-  // spotLight.target = island;
-  // scene.add(spotLight);
-  
-  // var pointLight2 = new THREE.PointLight( 0xffffff, 0.5, 300 );
-  // pointLight2.position.set( 100, 100, -100 );
-  // scene.add(pointLight2);
   
   //ambient
   var light = new THREE.AmbientLight( 0x333333 );

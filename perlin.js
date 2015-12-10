@@ -19,9 +19,6 @@ var permutation = [ 151,160,137,91,90,15,
 
 var p = [];
 
-//var cycleCount = 0;
-//var cycleMax = 255;
-
 var THIRD_PI = Math.PI / 3;
 var QUARTER_PI = Math.PI / 4;
 var gradients2D = [ [0,1], [0, -1], [1, 0], [-1,0], [ Math.cos(THIRD_PI), Math.sin(THIRD_PI) ], [ -Math.cos(THIRD_PI), Math.sin(THIRD_PI) ], [ Math.cos(THIRD_PI), -Math.sin(THIRD_PI) ],
@@ -32,7 +29,7 @@ var isInit = false;
    
 /*
  * From http://freespace.virgin.net/hugo.elias/models/m_perlin.htm
- * and seen on many other articles/forums
+ * and seen on many other articles/forums.  This is no longer used in the actual code.
  */
 function coslerp( a, b, x ){
 	
@@ -99,15 +96,8 @@ function perlin( x, y ){
 	
 	var u = fade(xf);
 	var v = fade(yf);
-	
-	//var offset = cycleCount;// % cycleMax;
+
 	var offset = 0;
-	/*
-	var aa = Math.floor( Math.random() * 255 );
-	var ab = Math.floor( Math.random() * 255 );
-	var ba = Math.floor( Math.random() * 255 );
-	var bb = Math.floor( Math.random() * 255 );
-	*/
 	
 	var aa = p[p[xi  + offset] + yi   + offset];
 	var ab = p[p[xi  + offset] + yi+1 + offset];
@@ -130,9 +120,6 @@ function OctavePerlin( x, y, numOctaves, persistence ){
 	var amplitude = 1;
 	var maxValue = 0;
 	
-	//var printString = x.toString() + ", " + y.toString();
-	//console.log(printString);
-	
 	for( var i = 0; i < numOctaves; i++ ){
 		total += perlin( x * frequency, y * frequency) * amplitude;
 		maxValue += amplitude;
@@ -143,6 +130,11 @@ function OctavePerlin( x, y, numOctaves, persistence ){
 	return total/maxValue;
 }
 
+/*
+ * Returns an array of perlin noise values of size numSteps * numSteps with the given number of octaves and persistence.
+ * Width and Height determine the x and y integer values used to generate the noise, while the number of steps impact the fractional
+ * values.
+ */
 function getPerlinNoiseArray( width, height, numSteps, numOctaves, persistence ){
 	
 	if( !isInit ){
@@ -159,13 +151,7 @@ function getPerlinNoiseArray( width, height, numSteps, numOctaves, persistence )
 			arr[arr.length] = OctavePerlin( i, j, numOctaves, persistence );
 		}
 	}
-	/*
-	cycleCount++;
-	
-	if( cycleCount == cycleMax ){
-		cycleCount = 0;
-	}*/
-	
+
 	return arr;
 }
 
